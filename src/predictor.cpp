@@ -5,6 +5,8 @@
 //  Implement the various branch predictors below as      //
 //  described in the README                               //
 //========================================================//
+
+// Budget limit: 64Kbits + 1024 bits
 #include <stdio.h>
 #include <math.h>
 #include "predictor.h"
