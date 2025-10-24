@@ -42,12 +42,103 @@ int verbose;
 uint8_t *bht_gshare;
 uint64_t ghistory;
 
+// tournament sizes
+int pcIndexBits = 10;  // Number of bits used for PC index
+int lhistoryBits = 10; // Number of bits used for Local History
+int tghistoryBits = 12; // Number of bits used for Tournament Global History
+int phistoryBits = 12;  // Number of bits used for Path History
+int choiceBits = 12; // Number of bits used for Choice Predictor
+
+// Tables
+uint8_t *bht_local; // local predictor 3 bit counter
+uint16_t *lht_local; // local history table 10 bits history
+uint8_t *tbht_global; // tournament global predictor 2 bit counter
+uint8_t *bht_choice; // choice predictor 2 bit counter
+uint16_t path_history; // path history register
 //------------------------------------//
 //        Predictor Functions         //
 //------------------------------------//
 
 // Initialize the predictor
-//
+
+//tournament functions
+void init_tournament()
+{
+  int lht_entries = 1 << pcIndexBits;
+  int bht_local_entries = 1 << lhistoryBits;
+  int tbht_global_entries = 1 << tghistoryBits;
+  int bht_choice_entries = 1 << tghistoryBits;
+
+  // allocate memory
+  lht_local = (uint16_t *)malloc(lht_entries * sizeof(uint16_t));
+  bht_local = (uint8_t *)malloc(bht_local_entries * sizeof(uint8_t));
+  tbht_global = (uint8_t *)malloc(tbht_global_entries * sizeof(uint8_t));
+  bht_choice = (uint8_t *)malloc(bht_choice_entries * sizeof(uint8_t));
+
+  // initialize tables
+  for (int i = 0; i < lht_entries; i++)
+  {
+    lht_local[i] = 0;
+  }
+  for (int i = 0; i < bht_local_entries; i++)
+  {
+    bht_local[i] = WN;
+  }
+  for (int i = 0; i < tbht_global_entries; i++)
+  {
+    tbht_global[i] = WN;
+    bht_choice[i] = WN;
+  }
+
+  ghistory = 0; // idk about this one
+  path_history = 0;
+}
+
+uint8_t tournament_predict(uint32_t pc)
+{
+  
+  return NOTTAKEN;
+}
+
+void train_tournament(uint32_t pc, uint8_t outcome)
+{
+  // Update local predictor
+  uint32_t lht_index = pc & ((1 << pcIndexBits) - 1);
+  uint16_t local_history = lht_local[lht_index];
+  uint32_t bht_local_index = local_history & ((1 << lhistoryBits) - 1);
+
+  // Update state of entry in local BHT based on outcome
+  switch (bht_local[bht_local_index])
+  {
+  case WN:
+    bht_local[bht_local_index] = (outcome == TAKEN) ? WT : SN;
+    break;
+  case SN:
+    bht_local[bht_local_index] = (outcome == TAKEN) ? WN : SN;
+    break;
+  case WT:
+    bht_local[bht_local_index] = (outcome == TAKEN) ? ST : WN;
+    break;
+  case ST:
+    bht_local[bht_local_index] = (outcome == TAKEN) ? ST : WT;
+    break;
+  default:
+    printf("Warning: Undefined state of entry in Local BHT!\n");
+    break;
+  }
+
+  // Update local history table
+  lht_local[lht_index] = ((local_history << 1) | outcome) & ((1 << lhistoryBits) - 1);
+}
+
+void cleanup_tournament()
+{
+  free(lht_local);
+  free(bht_local);
+  free(tbht_global);
+  free(bht_choice);
+}
+
 
 // gshare functions
 void init_gshare()
