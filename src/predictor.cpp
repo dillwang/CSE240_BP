@@ -49,19 +49,22 @@ int tghistoryBits = 12; // Number of bits used for Tournament Global History
 int phistoryBits = 12;  // Number of bits used for Path History
 int choiceBits = 12; // Number of bits used for Choice Predictor
 
-// Tables
+// tournament Tables
 uint8_t *bht_local; // local predictor 3 bit counter
 uint16_t *lht_local; // local history table 10 bits history
 uint8_t *tbht_global; // tournament global predictor 2 bit counter
 uint8_t *bht_choice; // choice predictor 2 bit counter
 uint16_t path_history; // path history register
+
+
 //------------------------------------//
 //        Predictor Functions         //
 //------------------------------------//
 
 // Initialize the predictor
 
-//tournament functions
+// tournament functions
+// looks good so far
 void init_tournament()
 {
   int lht_entries = 1 << pcIndexBits;
@@ -96,10 +99,11 @@ void init_tournament()
 
 uint8_t tournament_predict(uint32_t pc)
 {
-  
+
   return NOTTAKEN;
 }
 
+// This is not done yet
 void train_tournament(uint32_t pc, uint8_t outcome)
 {
   // Update local predictor
@@ -213,6 +217,8 @@ void cleanup_gshare()
   free(bht_gshare);
 }
 
+
+// initialize, make prediction, train below
 void init_predictor()
 {
   switch (bpType)
@@ -223,6 +229,7 @@ void init_predictor()
     init_gshare();
     break;
   case TOURNAMENT:
+    init_tournament();
     break;
   case CUSTOM:
     break;
@@ -246,7 +253,7 @@ uint32_t make_prediction(uint32_t pc, uint32_t target, uint32_t direct)
   case GSHARE:
     return gshare_predict(pc);
   case TOURNAMENT:
-    return NOTTAKEN;
+    return tournament_predict(pc);
   case CUSTOM:
     return NOTTAKEN;
   default:
@@ -273,7 +280,7 @@ void train_predictor(uint32_t pc, uint32_t target, uint32_t outcome, uint32_t co
     case GSHARE:
       return train_gshare(pc, outcome);
     case TOURNAMENT:
-      return;
+      return train_tournament(pc, outcome);
     case CUSTOM:
       return;
     default:
